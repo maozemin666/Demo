@@ -12,15 +12,15 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.myapplication.DeviceListActivity;
 import com.example.myapplication.R;
-import com.example.myapplication.haikang.LogUtil.SuperLog;
 import com.example.myapplication.haikang.bean.ControlRequest;
 import com.example.myapplication.haikang.bean.DeviceListResponse;
 import com.example.myapplication.haikang.bean.PreviewRequest;
 import com.example.myapplication.haikang.bean.PreviewResp;
 import com.example.myapplication.haikang.http.HikApi;
 import com.example.myapplication.haikang.http.HikApiService;
+import com.example.myapplication.haikang.log.SuperLog;
+import com.example.myapplication.ui.DeviceListActivity;
 import com.google.gson.Gson;
 
 import java.util.ArrayList;
@@ -78,7 +78,7 @@ public class DeviceListAdapter extends RecyclerView.Adapter<DeviceListAdapter.Vi
         request.setCameraIndexCode(cameraIndexCode);
         Map<String, String> headerMap = HikApiService.getPreviewHeaderMap(new Gson().toJson(request));
 
-        HikApi.api().previewURLs(headerMap, request) .subscribeOn(Schedulers.io())
+        deviceListActivity.addDisposable(HikApi.api().previewURLs(headerMap, request) .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(response -> {
                     if (response == null) {
@@ -103,7 +103,7 @@ public class DeviceListAdapter extends RecyclerView.Adapter<DeviceListAdapter.Vi
                 }, error -> {
                     deviceListActivity.setResponseText("预览异常：" + error.getMessage());
                     SuperLog.info2SD(TAG, "预览异常：" + error.getMessage());
-                });
+                }));
     }
 
     private void controller(DeviceListResponse.DataDTO.ListDTO listDTO) {
@@ -119,7 +119,7 @@ public class DeviceListAdapter extends RecyclerView.Adapter<DeviceListAdapter.Vi
         request.setCommand("GOTO_PRESET");
         Map<String, String> headerMap = HikApiService.getControllerHeaderMap(new Gson().toJson(request));
 
-        HikApi.api().controlling(headerMap, request) .subscribeOn(Schedulers.io())
+        deviceListActivity.addDisposable(HikApi.api().controlling(headerMap, request) .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(response -> {
                     if (response == null) {
@@ -138,7 +138,7 @@ public class DeviceListAdapter extends RecyclerView.Adapter<DeviceListAdapter.Vi
                 }, error -> {
                     deviceListActivity.setResponseText("云台操作异常：" + error.getMessage());
                     SuperLog.info2SD(TAG, "云台操作异常：" + error.getMessage());
-                });
+                }));
     }
 
     @Override
@@ -146,7 +146,7 @@ public class DeviceListAdapter extends RecyclerView.Adapter<DeviceListAdapter.Vi
         return list == null ? 0 : list.size();
     }
 
-    class ViewHolder extends RecyclerView.ViewHolder {
+    static class ViewHolder extends RecyclerView.ViewHolder {
         Button preview;
         Button controller;
         TextView itemTextView;

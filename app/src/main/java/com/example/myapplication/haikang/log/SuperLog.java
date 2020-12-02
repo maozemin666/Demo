@@ -1,4 +1,4 @@
-package com.example.myapplication.haikang.LogUtil;
+package com.example.myapplication.haikang.log;
 
 import android.os.Build;
 import android.os.Environment;

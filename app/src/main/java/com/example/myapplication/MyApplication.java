@@ -2,8 +2,8 @@ package com.example.myapplication;
 
 import android.app.Application;
 
-import com.example.myapplication.haikang.LogUtil.SuperLog;
-import com.example.myapplication.haikang.LogUtil.UtilBase;
+import com.example.myapplication.haikang.log.SuperLog;
+import com.example.myapplication.haikang.log.UtilBase;
 
 public class MyApplication extends Application {
 

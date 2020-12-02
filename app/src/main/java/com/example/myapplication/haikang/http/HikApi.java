@@ -1,5 +1,6 @@
 package com.example.myapplication.haikang.http;
 
+import com.example.myapplication.haikang.HikConfig;
 import com.example.myapplication.haikang.bean.ControlRequest;
 import com.example.myapplication.haikang.bean.ControlResp;
 import com.example.myapplication.haikang.bean.DeviceListResponse;
@@ -12,15 +13,14 @@ import java.util.Map;
 import io.reactivex.Observable;
 import retrofit2.http.Body;
 import retrofit2.http.HeaderMap;
-import retrofit2.http.Headers;
 import retrofit2.http.POST;
 
 public class HikApi {
-    public static final String BASE_URL = "https://183.215.16.254:446";
+    public static final String BASE_URL = HikConfig.host;
 
-    public static final String AK = "21780458";
+    public static final String AK = HikConfig.appKey;
 
-    public static final String SK = "yOmXQCNQQlV479JMdlVR";
+    public static final String SK = HikConfig.appSecret;
 
     private static final String ARTEMIS_PATH = "/artemis";
 
@@ -28,11 +28,11 @@ public class HikApi {
     public static final String PREVIEW_PATH = ARTEMIS_PATH + "/api/video/v2/cameras/previewURLs";
     public static final String CONTROLLING_PATH = ARTEMIS_PATH + "/api/video/v1/ptzs/controlling";
 
-    public static HiService api() {
+    public static ApiService api() {
         return HikApiService.getInstance().getApi(BASE_URL);
     }
 
-    public interface HiService {
+    public interface ApiService {
         @POST(DEVICE_SEARCH_PATH)
         Observable<DeviceListResponse> encodeDeviceSearch(@HeaderMap Map<String,String> map, @Body DeviceSearchRequest request);
 

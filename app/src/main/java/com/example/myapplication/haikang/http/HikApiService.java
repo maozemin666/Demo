@@ -27,8 +27,8 @@ public class HikApiService {
     private HikApiService() {
     }
 
-    public HikApi.HiService getApi(String baseUrl) {
-        return getRetrofit(baseUrl).create(HikApi.HiService.class);
+    public HikApi.ApiService getApi(String baseUrl) {
+        return getRetrofit(baseUrl).create(HikApi.ApiService.class);
     }
 
     private static class SingleHolder {
@@ -57,17 +57,17 @@ public class HikApiService {
     }
 
     public static Map<String, String> getSearchHeaderMap(String body) {
-        return generateBasicHeader(HikApi.DEVICE_SEARCH_PATH, null, null, null, "application/json;charset=UTF-8"
+        return generateBasicHeader(HikApi.DEVICE_SEARCH_PATH, body, null, null, "application/json;charset=UTF-8"
                 , null, null);
     }
 
     public static Map<String, String> getPreviewHeaderMap(String body) {
-        return generateBasicHeader(HikApi.PREVIEW_PATH, null, null, null, "application/json;charset=UTF-8"
+        return generateBasicHeader(HikApi.PREVIEW_PATH, body, null, null, "application/json;charset=UTF-8"
                 , null, null);
     }
 
     public static Map<String, String> getControllerHeaderMap(String body) {
-        return generateBasicHeader(HikApi.CONTROLLING_PATH, null, null, null, "application/json;charset=UTF-8"
+        return generateBasicHeader(HikApi.CONTROLLING_PATH, body, null, null, "application/json;charset=UTF-8"
                 , null, null);
     }
 

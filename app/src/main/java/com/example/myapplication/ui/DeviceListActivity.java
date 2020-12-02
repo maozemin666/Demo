@@ -1,4 +1,4 @@
-package com.example.myapplication;
+package com.example.myapplication.ui;
 
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -8,18 +8,21 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.myapplication.R;
 import com.example.myapplication.haikang.DeviceListAdapter;
-import com.example.myapplication.haikang.LogUtil.SuperLog;
 import com.example.myapplication.haikang.bean.DeviceListResponse;
 import com.example.myapplication.haikang.bean.DeviceSearchRequest;
 import com.example.myapplication.haikang.http.HikApi;
 import com.example.myapplication.haikang.http.HikApiService;
+import com.example.myapplication.haikang.log.SuperLog;
 import com.google.gson.Gson;
 
 import java.util.List;
 import java.util.Map;
 
 import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
 
 public class DeviceListActivity extends AppCompatActivity {
@@ -27,6 +30,7 @@ public class DeviceListActivity extends AppCompatActivity {
     private RecyclerView rv_device;
     private DeviceListAdapter deviceListAdapter;
     private TextView tv_response;
+    private final CompositeDisposable compositeDisposable = new CompositeDisposable();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,7 +55,7 @@ public class DeviceListActivity extends AppCompatActivity {
         request.setPageSize(3);
         Map<String, String> searchHeaderMap = HikApiService.getSearchHeaderMap(new Gson().toJson(request));
 
-        HikApi.api().encodeDeviceSearch(searchHeaderMap, request)
+        compositeDisposable.add(HikApi.api().encodeDeviceSearch(searchHeaderMap, request)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(response -> {
@@ -79,7 +83,7 @@ public class DeviceListActivity extends AppCompatActivity {
                 }, error -> {
                     SuperLog.info2SD(TAG, "请求设备列表异常：" + error.getMessage());
                     setResponseText("请求设备列表异常：" + error.getMessage());
-                });
+                }));
     }
 
     public void setResponseText(String text) {
@@ -87,5 +91,17 @@ public class DeviceListActivity extends AppCompatActivity {
             return;
         }
         tv_response.setText(text);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (compositeDisposable.isDisposed()) {
+            compositeDisposable.dispose();
+        }
+    }
+
+    public void addDisposable(Disposable disposable) {
+        this.compositeDisposable.add(disposable);
     }
 }

@@ -1,4 +1,4 @@
-package com.example.myapplication.haikang.LogUtil;
+package com.example.myapplication.haikang.log;
 
 import android.text.TextUtils;
 import android.util.Log;
