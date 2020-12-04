@@ -24,7 +24,11 @@ package com.example.myapplication.haikang;
  * @Date 2017/4/26
  */
 public class HikConfig {
-    public static String host;
-    public static String appKey;
-    public static String appSecret;
+    public static final String host = "https://183.215.16.254:446";
+    public static final String appKey = "21780458";
+    public static final String appSecret = "yOmXQCNQQlV479JMdlVR";
+
+    public static int urlSize = 9;
+    public static String protocol = "rtsp";
+    public static String expand = "streamform=ps";
 }

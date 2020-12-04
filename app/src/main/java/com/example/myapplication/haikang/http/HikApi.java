@@ -16,16 +16,17 @@ import retrofit2.http.HeaderMap;
 import retrofit2.http.POST;
 
 public class HikApi {
-    public static final String BASE_URL = HikConfig.host;
+    public static String BASE_URL = HikConfig.host;
 
-    public static final String AK = HikConfig.appKey;
+    public static String AK = HikConfig.appKey;
 
-    public static final String SK = HikConfig.appSecret;
+    public static String SK = HikConfig.appSecret;
 
     private static final String ARTEMIS_PATH = "/artemis";
 
-    public static final String DEVICE_SEARCH_PATH = ARTEMIS_PATH + "/api/resource/v2/encodeDevice/search";
-    public static final String PREVIEW_PATH = ARTEMIS_PATH + "/api/video/v2/cameras/previewURLs";
+    //    public static final String DEVICE_SEARCH_PATH = ARTEMIS_PATH + "/api/resource/v1/encodeDevice/search";
+    public static final String DEVICE_SEARCH_PATH = ARTEMIS_PATH + "/api/resource/v1/cameras";
+    public static final String PREVIEW_PATH = ARTEMIS_PATH + "/api/video/v1/cameras/previewURLs";
     public static final String CONTROLLING_PATH = ARTEMIS_PATH + "/api/video/v1/ptzs/controlling";
 
     public static ApiService api() {
@@ -34,12 +35,12 @@ public class HikApi {
 
     public interface ApiService {
         @POST(DEVICE_SEARCH_PATH)
-        Observable<DeviceListResponse> encodeDeviceSearch(@HeaderMap Map<String,String> map, @Body DeviceSearchRequest request);
+        Observable<DeviceListResponse> encodeDeviceSearch(@HeaderMap Map<String, String> map, @Body DeviceSearchRequest request);
 
         @POST(PREVIEW_PATH)
-        Observable<PreviewResp> previewURLs(@HeaderMap Map<String,String> map, @Body PreviewRequest request);
+        Observable<PreviewResp> previewURLs(@HeaderMap Map<String, String> map, @Body PreviewRequest request);
 
         @POST(CONTROLLING_PATH)
-        Observable<ControlResp> controlling(@HeaderMap Map<String,String> map, @Body ControlRequest request);
+        Observable<ControlResp> controlling(@HeaderMap Map<String, String> map, @Body ControlRequest request);
     }
 }

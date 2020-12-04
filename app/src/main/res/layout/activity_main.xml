@@ -12,7 +12,7 @@
         android:id="@+id/ip"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="https://183.215.16.254:446" />
+        android:text="https://183.215.16.254:446" />
 
     <TextView
         android:layout_width="match_parent"
@@ -23,7 +23,7 @@
         android:id="@+id/AK"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="21780458" />
+        android:text="25701801" />
 
     <TextView
         android:layout_width="match_parent"
@@ -34,7 +34,18 @@
         android:id="@+id/SK"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="yOmXQCNQQlV479JMdlVR" />
+        android:text="m4rT982FymJ5zAgQmp5h" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="请求几个视频资源(默认9)：" />
+
+    <EditText
+        android:id="@+id/url_size"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="9" />
 
     <LinearLayout
         android:layout_width="match_parent"

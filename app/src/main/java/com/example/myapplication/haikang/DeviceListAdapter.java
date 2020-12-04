@@ -21,11 +21,14 @@ import com.example.myapplication.haikang.http.HikApi;
 import com.example.myapplication.haikang.http.HikApiService;
 import com.example.myapplication.haikang.log.SuperLog;
 import com.example.myapplication.ui.DeviceListActivity;
+import com.example.myapplication.ui.PreviewActivity;
 import com.google.gson.Gson;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.schedulers.Schedulers;
@@ -36,6 +39,7 @@ public class DeviceListAdapter extends RecyclerView.Adapter<DeviceListAdapter.Vi
     private final DeviceListActivity deviceListActivity;
     private List<DeviceListResponse.DataDTO.ListDTO> list;
     private Context context;
+    private final ArrayList<String> previewUrls = new ArrayList<>();
 
     public DeviceListAdapter(DeviceListActivity deviceListActivity) {
         this.deviceListActivity = deviceListActivity;
@@ -63,47 +67,107 @@ public class DeviceListAdapter extends RecyclerView.Adapter<DeviceListAdapter.Vi
         }
         DeviceListResponse.DataDTO.ListDTO listDTO = list.get(position);
         holder.itemTextView.setText(listDTO.getCameraName());
-        holder.preview.setOnClickListener(v -> preview(listDTO));
+        holder.preview.setOnClickListener(v -> previewOne(listDTO));
         holder.controller.setOnClickListener(v -> controller(listDTO));
     }
 
-    private void preview(DeviceListResponse.DataDTO.ListDTO listDTO) {
+    @Override
+    public int getItemCount() {
+        return list == null ? 0 : list.size();
+    }
+
+    private void preview(DeviceListResponse.DataDTO.ListDTO listDTO, CountDownLatch latch) {
         String cameraIndexCode = listDTO.getCameraIndexCode();
         if (TextUtils.isEmpty(cameraIndexCode)) {
             Toast.makeText(context, "cameraIndexCode is empty", Toast.LENGTH_SHORT).show();
+            latch.countDown();
             return;
         }
 
         PreviewRequest request = new PreviewRequest();
         request.setCameraIndexCode(cameraIndexCode);
+        request.setStreamType(1);
+        request.setProtocol(HikConfig.protocol);
+        request.setExpand(HikConfig.expand);
         Map<String, String> headerMap = HikApiService.getPreviewHeaderMap(new Gson().toJson(request));
 
-        deviceListActivity.addDisposable(HikApi.api().previewURLs(headerMap, request) .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
+        deviceListActivity.addDisposable(HikApi.api().previewURLs(headerMap, request).subscribeOn(Schedulers.io())
                 .subscribe(response -> {
+                    String jsonResp = deviceListActivity.gson.toJson(response);
                     if (response == null) {
-                        deviceListActivity.setResponseText("预览结果为空："+response.toString());
-                        SuperLog.info2SD(TAG, "预览结果为空："+response.toString());
+                        setResponseText("预览结果为空：" + jsonResp);
+                        SuperLog.info2SD(TAG, "预览结果为空：" + jsonResp);
+                        latch.countDown();
                         return;
                     }
 
                     if (TextUtils.equals(response.getCode(), "0")) {
                         PreviewResp.DataDTO data = response.getData();
                         if (data == null) {
-                            SuperLog.info2SD(TAG, "预览请求成功! 预览fail：" + response.toString());
-                            deviceListActivity.setResponseText("预览请求成功! 预览fail：" + response.toString());
+                            SuperLog.info2SD(TAG, "预览请求成功! 预览fail：" + jsonResp);
+                            setResponseText("预览请求成功! 预览fail：" + jsonResp);
+                            latch.countDown();
                             return;
                         }
-                        deviceListActivity.setResponseText("预览请求成功：" + response.toString());
-                        SuperLog.info2SD(TAG, "预览请求成功：" + response.toString());
+                        setResponseText("预览请求成功：" + jsonResp);
+                        SuperLog.info2SD(TAG, "预览请求成功：" + jsonResp);
+                        previewUrls.add(data.getUrl());
                     } else {
-                        deviceListActivity.setResponseText("预览fail：" + response.toString());
-                        SuperLog.info2SD(TAG, "预览fail：" + response.toString());
+                        setResponseText("预览fail：" + jsonResp);
+                        SuperLog.info2SD(TAG, "预览fail：" + jsonResp);
                     }
+                    latch.countDown();
                 }, error -> {
-                    deviceListActivity.setResponseText("预览异常：" + error.getMessage());
+                    setResponseText("预览异常：" + error.getMessage());
                     SuperLog.info2SD(TAG, "预览异常：" + error.getMessage());
+                    latch.countDown();
                 }));
+    }
+
+    private void previewOne(DeviceListResponse.DataDTO.ListDTO listDTO) {
+        previewUrls.clear();
+        CountDownLatch latch = new CountDownLatch(1);
+
+        preview(listDTO, latch);
+
+        try {
+            latch.await(1L, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            SuperLog.info2SD(TAG, "preview CountDownLatch InterruptedException：");
+        }
+
+        SuperLog.info2SD(TAG, "previewOne previewUrls：" + previewUrls.size());
+        if (previewUrls.size() <= 0) {
+            setResponseText("当前预览url is empty");
+            Toast.makeText(deviceListActivity, "预览当前资源失败，当前 url is empty", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        PreviewActivity.startPreviewActivity(deviceListActivity, previewUrls);
+    }
+
+    public void previewAll() {
+        if (getItemCount() <= 0) {
+            Toast.makeText(deviceListActivity, "无资源预览", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        previewUrls.clear();
+        CountDownLatch latch = new CountDownLatch(list.size());
+        for (DeviceListResponse.DataDTO.ListDTO listDTO : list) {
+            preview(listDTO, latch);
+        }
+        try {
+            latch.await(5L, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            SuperLog.info2SD(TAG, "preview CountDownLatch InterruptedException：");
+        }
+
+        SuperLog.info2SD(TAG, "previewAll previewUrls：" + previewUrls.size());
+        if (previewUrls.size() <= 0) {
+            setResponseText("当前预览url is empty");
+            Toast.makeText(deviceListActivity, "预览全部失败，当前 url is empty", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        PreviewActivity.startPreviewActivity(deviceListActivity, previewUrls);
     }
 
     private void controller(DeviceListResponse.DataDTO.ListDTO listDTO) {
@@ -115,35 +179,34 @@ public class DeviceListAdapter extends RecyclerView.Adapter<DeviceListAdapter.Vi
 
         ControlRequest request = new ControlRequest();
         request.setCameraIndexCode(cameraIndexCode);
-        request.setAction(1);
-        request.setCommand("GOTO_PRESET");
+        request.setAction(0);
+        request.setCommand("LEFT");
         Map<String, String> headerMap = HikApiService.getControllerHeaderMap(new Gson().toJson(request));
 
-        deviceListActivity.addDisposable(HikApi.api().controlling(headerMap, request) .subscribeOn(Schedulers.io())
+        deviceListActivity.addDisposable(HikApi.api().controlling(headerMap, request).subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(response -> {
                     if (response == null) {
-                        deviceListActivity.setResponseText("云台操作为空："+response.toString());
-                        SuperLog.info2SD(TAG, "云台操作为空："+response.toString());
+                        setResponseText("云台操作为空：" + deviceListActivity.gson.toJson(response));
+                        SuperLog.info2SD(TAG, "云台操作为空：" + deviceListActivity.gson.toJson(response));
                         return;
                     }
 
                     if (TextUtils.equals(response.getCode(), "0")) {
-                        deviceListActivity.setResponseText("云台操 作请求成功：" + response.toString());
-                        SuperLog.info2SD(TAG, "云台操 作请求成功：" + response.toString());
+                        setResponseText("云台操 作请求成功：" + deviceListActivity.gson.toJson(response));
+                        SuperLog.info2SD(TAG, "云台操 作请求成功：" + deviceListActivity.gson.toJson(response));
                     } else {
-                        deviceListActivity.setResponseText("云台操作fail：" + response.toString());
-                        SuperLog.info2SD(TAG, "云台操作fail：" + response.toString());
+                        setResponseText("云台操作fail：" + deviceListActivity.gson.toJson(response));
+                        SuperLog.info2SD(TAG, "云台操作fail：" + deviceListActivity.gson.toJson(response));
                     }
                 }, error -> {
-                    deviceListActivity.setResponseText("云台操作异常：" + error.getMessage());
+                    setResponseText("云台操作异常：" + error.getMessage());
                     SuperLog.info2SD(TAG, "云台操作异常：" + error.getMessage());
                 }));
     }
 
-    @Override
-    public int getItemCount() {
-        return list == null ? 0 : list.size();
+    private void setResponseText(String text) {
+        deviceListActivity.setResponseText(text);
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
